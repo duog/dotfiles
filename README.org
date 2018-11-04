@@ -1,0 +1,12 @@
+* Doug Wilson's dotfiles repo
+
+I use [[https://thelocehiliosan.github.io/yadm/][yadm]] to manage my dotfiles, and [[https://nixos.org][nix]] to manage my software. You'll need those installed.
+
+This configuration is used on nixos. I have made some effort to be compatible with other distributions, but I wouldn't expect it to work out of the box.
+
+
+#+BEGIN_SRC shell
+
+  yadm clone $URL
+
+#+END_SRC
