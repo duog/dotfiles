@@ -3,6 +3,8 @@
 source ~/.profile
 source ~/.bashrc
 
+shopt -s expand_aliases
+
 command -v nix-env || (echo "nix-env executable not found, aborting" && exit -1)
 
 nixup
