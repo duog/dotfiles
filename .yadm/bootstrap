@@ -13,5 +13,7 @@ nix-channel --add https://nixos.org/channels/nixos-18.09 nixos-18.09
 
 nix-channel --update
 
-echo "Installing nix environment"
+echo "Installing nix user environment"
 nixup
+
+echo "User environment installed. To use this configuration's /etc/nixos/configuration.nix use ~/bin/nixos-link-config.sh"
