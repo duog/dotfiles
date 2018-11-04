@@ -1,0 +1,9 @@
+[Install]
+WantedBy=graphical-session.target
+
+[Service]
+ExecStart=/usr/bin/env nitrogen --restore
+Type=oneshot
+
+[Unit]
+Description=Restore the configured wallpaper

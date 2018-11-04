@@ -1,0 +1,11 @@
+[Install]
+WantedBy=default.target
+
+[Service]
+Type=simple
+ExecStart=%h/.nix-profile/share/passff-host/passff.py
+Restart=on-failure
+
+[Unit]
+Description=Host service for passff firefox extension
+PartOf=default.target

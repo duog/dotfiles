@@ -1,0 +1,8 @@
+configuration {
+  kb-row-up: "Control+k,Up,Control+p";
+  kb-row-down: "Control+j,Down,Control+n";
+  kb-accept-entry: "Return,KP_Enter";
+  kb-mode-previous: "Shift+Left,Control+K";
+  kb-mode-next: "Shift+Right,Control+J";
+  kb-remove-to-eol: "";
+}

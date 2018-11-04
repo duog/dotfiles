@@ -1,0 +1,9 @@
+[submodule "spacemacs"]
+	path = .emacs.d
+	url = ./.emacs.d
+[submodule "zprezto"]
+	path = .config/zsh/.zprezto
+ 	url = ./.config/zsh/.zprezto
+[submodule "tmux-conf"]
+	path = .config/my-home/tmux-conf
+	url = ./.config/my-home/tmux-conf

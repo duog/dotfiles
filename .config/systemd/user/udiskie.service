@@ -1,0 +1,10 @@
+[Install]
+WantedBy=graphical-session.target
+
+[Service]
+ExecStart=/usr/bin/env udiskie -2 -a -n -s
+
+[Unit]
+After=graphical-session-pre.target
+Description=udiskie mount daemon
+PartOf=graphical-session.target

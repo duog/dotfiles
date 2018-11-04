@@ -1,0 +1,12 @@
+[user]
+	email = douglas.wilson@gmail.com
+	name = Douglas Wilson
+[github]
+	user = duog
+	oauth-token = 6483b19a9cb34602f21c3596ada10b14ad96f933
+[magithub]
+	online = false
+[magithub "status"]
+	includeStatusHeader = false
+	includePullRequestsSection = false
+	includeIssuesSection = false

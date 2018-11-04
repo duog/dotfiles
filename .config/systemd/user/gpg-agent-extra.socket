@@ -1,0 +1,13 @@
+[Install]
+WantedBy=sockets.target
+
+[Socket]
+DirectoryMode=0700
+FileDescriptorName=extra
+ListenStream=%t/gnupg/S.gpg-agent.extra
+Service=gpg-agent.service
+SocketMode=0600
+
+[Unit]
+Description=GnuPG cryptographic agent and passphrase cache (restricted)
+Documentation=man:gpg-agent(1) man:ssh(1)

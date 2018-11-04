@@ -1,0 +1,12 @@
+[Install]
+WantedBy=graphical-session.target
+
+[Service]
+ExecStart=/usr/bin/env redshift-gtk -l 37:175 -t 5500:3700 -b 1:1 -m randr
+Restart=always
+RestartSec=3
+
+[Unit]
+After=graphical-session-pre.target
+Description=Redshift colour temperature adjuster
+PartOf=graphical-session.target

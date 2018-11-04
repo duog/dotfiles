@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+if [ $# -ne 0 ]; then
+  emacsclient -a "" -nw "$@"
+elif [ -n "$DISPLAY" ]; then
+  emacsclient -n -c 
+else
+  emacsclient -c
+fi

@@ -1,0 +1,11 @@
+[Install]
+WantedBy=graphical-session.target
+
+[Service]
+ExecStart=/usr/bin/env start-polybar.sh
+Type=forking
+
+[Unit]
+After=graphical-session-pre.target
+Description=Polybar status bar
+PartOf=graphical-session.target

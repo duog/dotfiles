@@ -1,0 +1,16 @@
+if [[ -e "$HOME/.profile" ]]; then
+  . "$HOME/.profile"
+fi
+xrdb -merge ~/.Xresources
+
+# If there are any running services from a previous session.
+# Need to run this in xprofile because the NixOS xsession
+# script starts up graphical-session.target.
+systemctl --user stop graphical-session.target graphical-session-pre.target
+
+#TODO systemd
+nitrogen --restore &
+
+echo $(tty) > ~/.this_tty
+
+export _XPROFILE_SOURCED=1

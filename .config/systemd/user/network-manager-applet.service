@@ -1,0 +1,10 @@
+[Install]
+WantedBy=graphical-session.target
+
+[Service]
+ExecStart=/usr/bin/env nm-applet --sm-disable
+
+[Unit]
+After=graphical-session-pre.target
+Description=Network Manager applet
+PartOf=graphical-session.target

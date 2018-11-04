@@ -1,0 +1,4 @@
+[Unit]
+BindsTo=graphical-session.target
+Description=Home Manager X session
+Requires=graphical-session-pre.target

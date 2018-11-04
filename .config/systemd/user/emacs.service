@@ -1,0 +1,15 @@
+[Install]
+WantedBy=default.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/env emacs --fg-daemon
+ExecStop=/usr/bin/env emacsclient --eval "(kill-emacs)"
+Restart=on-failure
+
+[Unit]
+Description=Emacs text editor
+Documentation=info:emacs man:emacs(1) https://gnu.org/software/emacs/
+After=set-environment.service
+Description=emacs daemon
+PartOf=default.target

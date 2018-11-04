@@ -1,0 +1,10 @@
+[Install]
+WantedBy=default.target
+
+[Service]
+ExecStart="%h/bin/import-environment.sh"
+Type=oneshot
+
+[Unit]
+Before=default.target
+Description=Import zsh profile into systemd

@@ -1,0 +1,12 @@
+[Install]
+WantedBy=graphical-session.target
+
+[Service]
+ExecStart=/usr/bin/env compton
+Restart=always
+RestartSec=3
+
+[Unit]
+After=graphical-session-pre.target
+Description=Compton X11 compositor
+PartOf=graphical-session.target

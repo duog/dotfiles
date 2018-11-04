@@ -1,0 +1,11 @@
+[Install]
+WantedBy=graphical-session.target
+
+[Service]
+ExecStart=/usr/bin/env setxkbmap -layout 'us' -variant '' -option 'caps:swapescape'
+Type=oneshot
+
+[Unit]
+After=graphical-session-pre.target
+Description=Set up keyboard in X
+PartOf=graphical-session.target

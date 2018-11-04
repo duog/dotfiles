@@ -1,0 +1,10 @@
+[Service]
+ExecReload=/usr/bin/env gpgconf --reload gpg-agent
+ExecStart=/usr/bin/env gpg-agent --supervised
+
+[Unit]
+After=gpg-agent.socket
+Description=GnuPG cryptographic agent and passphrase cache
+Documentation=man:gpg-agent(1)
+RefuseManualStart=true
+Requires=gpg-agent.socket

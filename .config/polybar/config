@@ -1,0 +1,302 @@
+
+;=====================================================
+;
+;   To learn more about how to configure Polybar
+;   go to https://github.com/jaagr/polybar
+;
+;   The README contains alot of information
+;
+;=====================================================
+
+[colors]
+background = ${xrdb:color0:#222}
+background-alt = ${xrdb:color3:#222}
+foreground = ${xrdb:color5:#222}
+foreground-alt = ${xrdb:color2:#555}
+highlight = ${xrdb:color2:#f00}
+urgent = #f00
+
+[settings]
+screenchange-reload = true
+
+[global/wm]
+margin-top = 3
+margin-bottom = 3
+
+[bar/main]
+monitor = ${env:MONITOR}
+width = 100%
+height = 25
+;offset-x = 1%
+; offset-y = 0%
+radius = 0.0
+; fixed-center = true
+
+background = ${colors.background}
+foreground = ${colors.foreground}
+
+line-size = 2
+line-color = ${colors.background-alt}
+
+border-size = 0
+border-color = #00000000
+
+padding-left = 1
+padding-right = 2
+padding-top = 2
+padding-bottom = 2
+
+module-margin-left = 1
+module-margin-right = 1
+
+font-0 = "Inconsolata:pixelsize=10;0"
+
+modules-left = xworkspaces xwindow
+modules-center = 
+modules-right = filesystem cpu temperature memory network date 
+
+;fix tray position
+;override-redirect = true
+
+tray-detached = false
+tray-position = right
+tray-offset-x = 0
+tray-offset-y = 0
+tray-scale = 1
+
+[module/xworkspaces]
+type = internal/xworkspaces
+
+format = <label-monitor> <label-state>
+
+label-active = A%name%
+label-occupied = O%name%
+label-urgent = U%name%
+label-empty = 
+
+[module/xwindow]
+type = internal/xwindow
+label = %title:0:30:...%
+
+; [module/i3]
+; type = internal/i3
+; format = <label-state><label-mode>
+
+; index-sort = true
+; enable-click = false
+; enable-scroll = false
+
+; ws-icon-0 = "1;web"
+; ws-icon-1 = "2;dev"
+; ws-icon-2 = "3;ent"
+; ws-icon-3 = "4;com"
+; ws-icon-4 = "5;vid"
+; ws-icon-5 = "6;bit"
+; ws-icon-7 = "7;rnd"
+; ws-icon-8 = "8;rnd"
+; ws-icon-9 = "9;rnd"
+
+; ;label-mode-padding = 4
+
+; ; Only show workspaces on the same output as the bar
+; pin-workspaces = false
+
+; label-mode = %icon%
+; label-mode-foreground = ${colors.foreground}
+; label-mode-background = ${colors.background}
+
+; ; focused = Active workspace on focused monitor
+; label-focused = %icon%
+; label-focused-foreground = ${colors.highlight}
+; label-focused-background = ${colors.background}
+; label-focused-underline = ${colors.highlight}
+; label-focused-padding = 1
+
+; ; unfocused = Inactive workspace on any monitor
+; label-unfocused = %icon%
+; label-unfocused-foreground = ${colors.highlight}
+; label-unfocused-background = ${colors.background}
+; label-unfocused-padding = 1
+
+; ; urgent = Workspace with urgency hint set
+; label-urgent = %icon%
+; label-urgent-foreground = ${colors.foreground-alt}
+; label-urgent-background = ${colors.background}
+
+; label-visible = %icon%
+; label-visible-padding = 1
+
+; [module/i3icons]
+; inherit = module/i3
+
+; # icon definition found in ~/.config/polybar/launch.sh
+
+; ws-icon-0 = ${env:POLY_WS_ICON_0}
+; ws-icon-1 = ${env:POLY_WS_ICON_1}
+; ws-icon-2 = ${env:POLY_WS_ICON_2}
+; ws-icon-3 = ${env:POLY_WS_ICON_3}
+; ws-icon-4 = ${env:POLY_WS_ICON_4}
+; ws-icon-5 = ${env:POLY_WS_ICON_5}
+; ws-icon-6 = ${env:POLY_WS_ICON_6}
+; ws-icon-7 = ${env:POLY_WS_ICON_7}
+; ws-icon-8 = ${env:POLY_WS_ICON_8}
+; ;ws-icon-default = 
+
+[module/cpu]
+type = internal/cpu
+interval = 2
+format = <label>
+
+label = CPU %percentage-cores%
+
+; [module/mpd]
+; type = internal/mpd
+
+; host = 127.0.0.1
+; port = 6600
+
+; ; Seconds to sleep between progressbar/song timer sync, Default: 1
+; interval = 2
+
+; format-online = <label-song>
+; format-online-prefix = " "
+; format-online-prefix-foreground = ${colors.foreground-alt}
+
+; label-song = %artist% - %title%
+; label-offline = mpd is offline
+
+; [module/current-song-spotify]
+; type = custom/script
+; exec = ~/Scripts/spotify.sh %artist% - %title%
+; tail = true
+; interval = 2
+
+; [module/volume]
+; type = internal/volume
+
+; format-volume = <label-volume> <bar-volume>
+; label-volume = VOL
+; label-volume-foreground = ${root.foreground}
+
+; format-muted-prefix = " "
+; format-muted-foreground = ${colors.foreground-alt}
+; label-muted = sound muted
+
+; bar-volume-width = 10
+; bar-volume-foreground-0 = ${colors.foreground}
+; bar-volume-foreground-1 = ${colors.foreground}
+; bar-volume-foreground-2 = ${colors.foreground}
+; bar-volume-foreground-3 = ${colors.foreground}
+; bar-volume-foreground-4 = ${colors.foreground}
+; bar-volume-foreground-5 = ${colors.foreground}
+; bar-volume-foreground-6 = ${colors.foreground-alt}
+; bar-volume-gradient = false
+; bar-volume-indicator = |
+; bar-volume-indicator-font = 2
+; bar-volume-fill = ─
+; bar-volume-fill-font = 2
+; bar-volume-empty = ─
+; bar-volume-empty-font = 2
+; bar-volume-empty-foreground = ${colors.foreground-alt}
+
+; [module/volume_percentage]
+; type = internal/volume
+
+; format-volume-prefix = " "
+; format-volume-prefix-foreground = ${colors.foreground-alt}
+; format-volume = <label-volume>
+
+; label-volume = %percentage%%
+; label-volume-foreground = ${colors.foreground}
+
+; format-muted-foreground = ${colors.foreground}
+; format-muted-prefix = " "
+; format-muted-prefix-foreground = ${colors.foreground-alt}
+; label-muted = muted
+; label-muted-foreground = ${colors.urgent}
+
+; [module/pavolume]
+; ; useful if machine is using multiple sinks
+; type = custom/script
+; interval = 2
+; label = %output%
+; exec = sh ~/Scripts/pavolume.sh
+; format-foreground = ${colors.foreground}
+; ; click-right = exec pavucontrol
+; click-left = sh ~/Scripts/pavolume.sh --togmute
+; scroll-up = sh ~/Scripts/pavolume.sh --up
+; scroll-down = sh ~/Scripts/pavolume.sh --down
+
+; [module/keyboard]
+; type = internal/xkeyboard
+
+; format-prefix = " "
+; format-prefix-foreground = ${colors.foreground-alt}
+; format = <label-layout>
+; format-foreground = ${colors.foreground}
+; label = layout = %name%
+
+; [module/vpncheck]
+; type = custom/script
+; exec = sh ~/Scripts/vpncheck.sh
+; format-foreground = ${colors.foreground}
+; interval = 5
+
+[module/time]
+type = internal/date
+interval = 5
+time = %I:%M
+time-alt = %H:%M:%S
+format-prefix-foreground = ${colors.foreground}
+label = %time%
+
+[module/date]
+type = internal/date
+interval = 1
+
+format-prefix-foreground = ${colors.foreground-alt}
+format-prefix = ""
+format-foreground = ${colors.foreground}
+
+date = "%Y-%m-%d"
+time = "%I:%M %p"
+label = " %date% %time% "
+
+[module/filesystem]
+type = internal/fs
+interval = 25
+
+mount-0 = /
+
+label-mounted = %{F#0a81f5}%mountpoint%%{F-}: %percentage_used%%
+label-unmounted = %mountpoint% not mounted
+label-unmounted-foreground = ${colors.foreground-alt}
+
+[module/memory]
+type = internal/memory
+interval = 2
+label = MEM: %percentage_used%% 
+
+[module/network]
+type = internal/network
+interface = enp0s25
+interval = 3.0
+accumulate-stats = true
+label-connected = %downspeed% %upspeed%
+
+label-disconnected = disconnected
+
+[module/temperature]
+type = internal/temperature
+thermal-zone = 6
+warn-temperature = 80
+units = false
+
+format = <label>
+format-warn = <label-warn>
+
+label = %temperature%
+label-warn = %temperature%
+label-warn-foreground = ${colors.foreground-alt}
+
+; vim:ft=dosini
