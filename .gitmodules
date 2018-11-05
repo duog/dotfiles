@@ -6,7 +6,7 @@
 	path = .config/zsh/.zprezto
 	url = https://github.com/sorin-ionescu/prezto 
 
-[submodule "tmux-conf"]
-	path = .config/my-home/tmux-conf
-	url = https://github.com/gpakosz/.tmux
 
+[submodule "tmux"] 
+	path = .config/tmux
+	url = https://github.com/gpakosz/.tmux
