@@ -3,8 +3,8 @@
 	url = https://github.com/syl20bnr/spacemacs
 	branch = develop
 [submodule "tmux.conf"]
-	path = /home/doug/.config/tmux
+	path = .config/tmux
 	url = https://github.com/gpakosz/.tmux
 [submodule "prezto"]
-	path = /home/doug/.config/zsh/.zprezto
+	path = .config/zsh/.zprezto
 	url = https://github.com/sorin-ionescu/prezto
