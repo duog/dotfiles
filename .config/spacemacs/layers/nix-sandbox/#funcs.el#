@@ -1,0 +1,24 @@
+(defun doug/load-direnv ()
+  (make-local-variable 'process-environment)
+  (make-local-variable 'exec-path)
+  (direnv-update-directory-environment)
+  )
+
+;; this doesn't do anything yet
+(defun doug/unload-direnv ()
+  (kill-local-variable 'process-environment)
+  (kill-local-variable 'exec-path)
+  )
+
+(defun advice-spacemacs//run-local-vars-mode-hook ()
+  (doug/load-direnv))
+
+(define-minor-mode doug/direnv-mode "
+  A global minor mode. If enabled, environment variables will be loaded from direnv
+  after file local variables, but before major-mode-local-vars-hook.
+"
+  :global t
+  (if doug/direnv-mode
+    (advice-add 'spacemacs//run-local-vars-mode-hook :before  #'advice-spacemacs//run-local-vars-mode-hook)
+    (advice-remove 'spacemacs//run-local-vars-mode-hook #'advice-spacemacs//run-local-vars-mode-hook)
+  ))
