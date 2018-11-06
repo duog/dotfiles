@@ -1,0 +1,10 @@
+
+package: X11-rm-0.2
+os: linux
+arch: x86_64
+compiler: ghc-8.4.3
+client: cabal-install-2.2.0.0
+dependencies: X11-1.9 base-4.11.1.0
+install-outcome: InstallOk
+docs-outcome: NotTried
+tests-outcome: NotTried

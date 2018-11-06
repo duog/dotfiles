@@ -1,0 +1,443 @@
+{-# language FlexibleContexts, LambdaCase, NamedFieldPuns, ScopedTypeVariables, NamedWildCards, OverloadedStrings, PartialTypeSignatures, RecordWildCards #-}
+module Main where
+
+import qualified XMonad.StackSet as W
+import XMonad
+import XMonad.Hooks.DynamicLog
+import XMonad.Hooks.EwmhDesktops
+import XMonad.Hooks.FadeWindows
+import XMonad.Hooks.ManageDocks
+import XMonad.Hooks.ManageHelpers
+import qualified XMonad.Util.ExtensibleState as ExtensibleState
+import XMonad.Layout.Spacing
+import XMonad.Actions.Submap
+import XMonad.Util.EZConfig
+import XMonad.Util.Run
+
+import qualified Data.Semigroup as S
+import Control.Arrow ((***))
+import Data.Bits
+import Control.Concurrent
+import Control.Concurrent.Async
+import Control.Exception
+import Data.List
+import Data.Maybe
+import Data.Monoid
+import System.Environment
+import Control.Concurrent.MVar
+import Data.Coerce
+import Control.Monad
+import Data.Foldable
+import Data.Traversable
+import System.IO
+import System.Exit
+import Control.Monad.Writer.CPS
+import System.Process
+import Data.List.Split
+import Control.Lens
+import qualified DBus as D
+import qualified DBus.Client as D
+import System.Posix.Signals
+import System.Posix.Types
+import System.FilePath
+import qualified Codec.Binary.UTF8.String as UTF8
+import Data.Semigroup.Foldable
+import Data.Map (Map)
+import qualified Data.Map.Strict as Map
+
+
+-- import DougMonad.Bindings
+
+myWorkspaces    = ["1","2","3","4","5","6","7","8","9"]
+
+
+
+main = do
+  myTerminal <- fromMaybe (terminal def) <$> lookupEnv "TERMINAL" 
+  dbus <- D.
+  D.requestName dbus (D.busName_ "org.xmonad.Log")
+    [D.nameAllowReplacement, D.nameReplaceExisting, D.nameDoNotQueue]
+  cache_dir <- getXMonadCacheDir
+  let log_filename = cache_dir </> "doug-xmonad.log"
+  hPutStrLn stderr $ "logfile: " <> log_filename
+  withFile log_filename AppendMode $ \log_file -> do
+    let c = ewmh $ def
+          { modMask = mod4Mask
+          , focusFollowsMouse = False
+          , clickJustFocuses = True
+          , terminal = myTerminal 
+          , layoutHook = myLayout 
+          , manageHook = composeAll
+            [ manageDocks
+            , manageHook def 
+            ]
+          , startupHook = do
+              ExtensibleState.put . LogFileState . Just $ log_file
+          , workspaces = myWorkspace wk wj wjs
+          , logHook = let
+              opacity :: _ -> Query (First Opacity)
+              opacity = fmap pure . XMonad.Hooks.FadeWindows.opacity
+              fadeHook = fold >=> maybe opaque pure . getFirst $
+                [  isUnfocused --> opacity 0.8
+                ,  fmap (isInfixOf "dzen" ) appName --> opacity 0.8
+                -- , isFloating --> opacity 0.85  
+                -- , opaque
+
+                ]
+              in dynamicLogWithPP (myLogHook dbus) <> fadeWindowsLogHook fadeHook
+          , handleEventHook = fold
+              [ fadeWindowsEventHook
+              , submapHandleEventHook c
+              , docksEventHook
+              , fullscreenEventHook
+              ]
+          , borderWidth = 0
+          , keys = \c -> let
+              ks = view _2 . runBind $ rootKeyMap c False
+              in ks & at (anyModifier, xK_Super_L) ?~ pure ()
+          }
+    launch c 
+  where
+myLayout :: _
+myLayout = spacing 5 . avoidStruts $
+  Tall 1 (3/100) (1/2) ||| Full
+
+getLogFileHandle :: X (Maybe Handle)
+getLogFileHandle = ExtensibleState.gets unLogFileState
+
+hLogLine :: Maybe Handle -> String -> IO ()
+hLogLine mb_h s = for_ mb_h $ \h -> do
+  hPutStrLn h s
+  hFlush h
+  hPutStrLn stderr s
+  hFlush h
+
+logLine :: String -> X ()
+logLine s = getLogFileHandle >>= liftIO . flip hLogLine s
+
+myLogHook :: D.Client -> PP
+myLogHook dbus = def
+    { ppOutput = dbusOutput dbus
+    , ppCurrent = wrap ("%{F" ++ blue2 ++ "} ") " %{F-}"
+    , ppVisible = wrap ("%{F" ++ blue ++ "} ") " %{F-}"
+    , ppUrgent = wrap ("%{F" ++ red ++ "} ") " %{F-}"
+    , ppHidden = wrap " " " "
+    , ppWsSep = ""
+    , ppSep = " | "
+    , ppTitle = myAddSpaces 25
+}
+fg        = "#ebdbb2" 
+bg        = "#282828"
+gray      = "#a89984"
+bg1       = "#3c3836"
+bg2       = "#505050"
+bg3       = "#665c54"
+bg4       = "#7c6f64"
+
+green     = "#b8bb26"
+darkgreen = "#98971a"
+red       = "#fb4934"
+darkred   = "#cc241d"
+yellow    = "#fabd2f"
+blue      = "#83a598"
+purple    = "#d3869b"
+aqua      = "#8ec07c"
+white     = "#eeeeee"
+
+pur2      = "#5b51c9"
+blue2 = "#2266d0"
+
+-- Emit a DBus signal on log updates
+dbusOutput :: D.Client -> String -> IO ()
+dbusOutput dbus str = do
+    let signal = (D.signal objectPath interfaceName memberName) {
+            D.signalBody = [D.toVariant $ UTF8.decodeString str]
+        }
+    D.emit dbus signal
+  where
+    objectPath = D.objectPath_ "/org/xmonad/Log"
+    interfaceName = D.interfaceName_ "org.xmonad.Log"
+    memberName = D.memberName_ "Update"
+
+myAddSpaces :: Int -> String -> String
+myAddSpaces len str = sstr ++ replicate (len - length sstr) ' '
+  where
+    sstr = shorten len str
+
+keyMapDoc :: String -> X Handle
+keyMapDoc name = do
+  -- focused screen location/size
+  r <- withWindowSet $ return . screenRect . W.screenDetail . W.current
+
+  handle <- spawnPipe $ unwords [ "showHintForKeymap.sh"
+                                , name
+                                , show (rect_x r)
+                                , show (rect_y r)
+                                , show (rect_width r)
+                                , show (rect_height r)
+                                , "purple"       -- key color
+                                , "white"        -- cmd color
+                                , "Input\\ Mono" -- font
+                                , "18"           -- line height
+                                ]
+
+  return handle
+
+toSubmap :: XConfig l -> String -> [(String, X ())] -> X ()
+toSubmap c name m = do
+  pipe <- keyMapDoc name
+  submap $ mkKeymap c m
+  io $ hClose pipe
+
+-- Note: Formatting is important for script
+focusKeymap = -- Focus
+  [ ("f", focus "firefox") -- firefox
+  , ("e", focus "emacs") -- Emacs
+  , ("m", windows W.focusMaster) -- Focus Master
+  , ("/", spawn menu)
+  ]
+  where focus :: String -> X ()
+        focus w = spawn ("wmctrl -a " ++ w)
+        menu = "wmctrl -l | cut -d' ' -f 5- | sort | uniq -u | dmenu -i | xargs -IWIN wmctrl -F -a WIN"
+
+-- musicKeymap = -- Music
+--   [ ("n", mpc "next") -- Next
+--   , ("N", mpc "prev") -- Prev
+--   , ("p", mpc "toggle") -- Toggle
+--   , ("r", mpc "random") -- Random
+--   , ("l", mpc "repeat") -- Repeat
+--   ]
+--   where mpc c = spawn ("mpc " ++ c)
+
+masterKeymap = -- Master Window
+  [ ("f",   windows W.focusMaster) -- Focus
+  , ("s",   windows W.swapMaster) -- Swap
+  , ("h",   sendMessage Shrink) -- Shrink
+  , ("l",   sendMessage Expand) -- Expand
+  , ("k",   incMaster) -- Inc
+  , ("j",   decMaster) -- Dec
+  ]
+  where incMaster       = sendMessage (IncMasterN 1)
+        decMaster       = sendMessage (IncMasterN (-1))
+
+-- screenKeymap = -- Screen
+--   [ ("0", rescreen)
+--   , ("2", layoutSplitScreen 2 $ TwoPane (3/100) (1/2)) -- TwoPane
+--   , ("3", layoutSplitScreen 3 $ ThreeColMid 1 (3/100) (1/2)) -- ThreeColmid
+--   , ("4", layoutSplitScreen 4 Grid) -- Grid
+--   , ("5", layoutSplitScreen 5 $ ThreeColMid 1 (3/100) (1/2)) -- ThreeColmid
+--   ]
+
+-- shotKeymap = -- Screen Shot
+--   [ ("c", setContext) -- Context
+--   , ("s", takeShot select) -- Select
+--   , ("w", takeShot currentWindow) -- Current Window
+--   , ("o", openDirectory)
+--   ]
+--   where setContext = spawn ("~/.xmonad/sshot-context.sh")
+--         takeShot a = spawn ("scrot " ++ a ++ " ~/screenshots/current-context/'%Y-%m-%dT%H%M%S_$wx$h.png'")
+--         openDirectory = spawn ("xdg-open ~/screenshots/current-context/")
+--         select        = "-s"
+--         currentWindow = "-u"
+
+rootKeyMap :: (_ ) => XConfig Layout -> Bool -> BindT m ()
+rootKeyMap c is_submap = do
+  let
+    mod = if is_submap then 0 else modMask c
+    shift = shiftMask
+    ctrl = controlMask
+    -- alt = altMask
+  bindKey "Launch Terminal" (mod .|. shift, xK_Return ) $ spawn (terminal c) 
+  bindKey "Launcher" (mod , xK_p ) $ spawn "rofi -show" 
+  bindKey "Close focused window" (mod .|. shift, xK_c ) kill
+
+  bindKey "Next Layout" (mod, xK_space) $ sendMessage NextLayout
+  bindKey "Reset Layout" (mod .|. shift, xK_space) . setLayout $ layoutHook c
+
+  bindKey "Focus down" (mod, xK_j) $ windows W.focusDown
+  bindKey "Focus up" (mod, xK_k) $ windows W.focusUp
+  bindKey "Focus master" (mod, xK_m) $ windows W.focusMaster
+
+  bindKey "Swap down" (mod, xK_Return) $ windows W.swapMaster
+  bindKey "Swap up" (mod .|. shift, xK_k) $ windows W.swapUp
+  bindKey "Swap master" (mod .|. shift, xK_m) $ windows W.swapDown
+
+  bindKey "Shrink master" (mod, xK_h) $ sendMessage Shrink
+  bindKey "Expand master" (mod, xK_l) $ sendMessage Expand
+  bindKey "Add window to master" (mod, xK_comma) $ sendMessage (IncMasterN 1)
+  bindKey "Expand master" (mod, xK_period) $ sendMessage (IncMasterN (-1))
+
+  bindKey "Push floating to tiled" (mod, xK_t) $ withFocused $ windows . W.sink
+
+  bindKey "Restart" (mod .|. shift, xK_q) $ spawn "xmonad --recompile && xmonad --restart"
+
+  when (not is_submap) $  bindSubmap "Root submenu" (mod .|. shift, xK_slash) (rootKeyMap c True)
+
+  bindSubmap "Workspaces" (mod, xK_w) $ for_ (zip [xK_1..] $ workspaces c) $ \(k, w) -> do
+    bindKey ("Switch to " <> w) (0, k) $ windows . W.greedyView $ w
+    bindKey ("Move window to  " <> w) (shift, k) $ windows . W.shift $ w
+
+  bindSubmap "Screens" (mod, xK_s) $ for_ (zip [xK_1..] [1..3]) $ \(k, s) -> do
+    bindKey ("Switch to " <> show s) (0, k) $ screenWorkspace s >>= traverse_ (windows . W.view)
+    bindKey ("Move window to  " <> show s) (shift, k) $ screenWorkspace s >>= traverse_ (windows . W.shift)
+
+data Binding = Binding String (KeyMask, KeySym) (X ())
+type BindT m a = WriterT [Binding] m a
+type Bind a = BindT Identity a
+
+type BindingHelp = ((KeyMask, KeySym), String)
+
+runBindT :: Monad m => BindT m a -> m (a, Map (KeyMask, KeySym) (X ()), [BindingHelp])
+runBindT m = do
+  (a, w) <- runWriterT m
+  pure (a, Map.fromList . fmap (\(Binding _ k a') -> (k, a')) $ w, [(k, n) | Binding n k _ <- w])
+
+runBind :: Bind a -> (a, Map (KeyMask, KeySym) (X ()), [BindingHelp])
+runBind = runIdentity . runBindT
+
+bindKey :: Monad m => String -> (KeyMask, KeySym) -> X () -> BindT m ()
+bindKey n k a = tell . pure $ Binding n k (hideHelp *> a)
+
+bindSubmap :: Monad m => String -> (KeyMask, KeySym) -> BindT m a -> BindT m a
+bindSubmap n k sm = do
+  (a, w, desc) <- lift $ runBindT sm
+  let sm k = hideHelp *> fromMaybe (pure ()) (Map.lookup k w) 
+  let b = Binding ("+" <> n) k (showHelp n desc *> enterSubmap sm)
+  tell $ pure b
+  pure a
+
+  
+showHelp ::  String -> [BindingHelp] -> X ()
+showHelp name bindings = withWindowSet $ \ws -> do
+  let (dzen2_args, dzen2_input) = mk_dzen2_args ws
+  mb_logh <- getLogFileHandle
+  let logLine' = hLogLine mb_logh
+  logLine $ "starting dzen with: " <> pp dzen2_args
+  hideHelp
+  a <- liftIO $ async $ do
+    let
+      cp = (proc "dzen2" dzen2_args)
+        { std_in = CreatePipe }
+    withCreateProcess cp $ \hin _hout _herr hp -> do
+      let
+        log_no_stdin = logLine' "showHelp: No stdin"
+        send_stdin h = do
+          hPutStrLn h . unlines $ dzen2_input 
+          hFlush h
+      maybe log_no_stdin send_stdin hin
+      threadDelay (60 * 1000000) `finally` logLine' "finished"
+  ExtensibleState.put . BindingsState . Just $ a
+  where
+    pp = foldMap $ \x -> "'" <> x <> "' "
+    mk_dzen2_args ws = let
+      W.Screen _ s (SD Rectangle{..}) = W.current ws
+      num_columns = 4
+      num_lines = length lines + 1
+      cols = chunksOf num_columns bindings
+      lines = fmap mk_line cols
+      mk_line = foldMap makeCell 
+      cell_limit = 30
+      makeCell (k, s) = "^fg(red)" <> pad 10 (keyToString k) <> "^fg()" <> pad 20 s
+      pad n s = take n $ s <> replicate (n - length s) ' '
+      title = name
+      args =   
+        [ "-ta", "c"
+        , "-sa", "l"
+        , "-l", show num_lines
+        , "-e", "onstart=uncollapse,stick,unhide,raise;button1=exit:0;button2=exit:0;button3=exit:0;siguser1=exit:0"
+        , "-x", show rect_x, "-y", show rect_y, "-w", show rect_width
+        , "-fn", "monospace"
+        ]
+      in (args, title : lines)
+
+hideHelp :: X ()
+hideHelp = do
+  BindingsState mb_p <- ExtensibleState.get
+  for_ mb_p  $ \p -> do
+    liftIO . cancel $ p
+    logLine "hiding help"
+
+  ExtensibleState.put $ BindingsState Nothing
+
+data BindingsState = BindingsState (Maybe (Async ()))
+
+instance ExtensionClass BindingsState where
+  initialValue = BindingsState Nothing
+
+newtype LogFileState = LogFileState { unLogFileState :: Maybe Handle }
+
+instance ExtensionClass LogFileState where
+  initialValue = LogFileState Nothing
+
+newtype SubmapState = SubmapState { unSubmapState :: Maybe ((KeyMask, KeySym) -> X()) }
+
+instance ExtensionClass SubmapState where
+  initialValue = SubmapState Empty
+
+enterSubmap :: ((KeyMask, KeySym) -> X ()) -> X ()
+enterSubmap f = do
+  logLine "enter submap"
+  XConf { theRoot, display} <- ask
+
+  io $ grabKeyboard display theRoot False grabModeAsync grabModeAsync currentTime
+  io $ grabPointer display theRoot False buttonPressMask grabModeAsync grabModeAsync
+                    XMonad.none XMonad.none currentTime
+  ExtensibleState.put . SubmapState . Just $ f
+
+exitSubmap :: X ()
+exitSubmap = do
+  logLine "exit submap"
+  XConf { display } <- ask
+  ExtensibleState.put . SubmapState $ Nothing
+  io $ ungrabPointer display currentTime
+  io $ ungrabKeyboard display currentTime
+  
+submapHandleEventHook :: _ => XConfig l -> Event -> X All
+submapHandleEventHook c e = do
+  XConf { display } <- ask
+  ExtensibleState.gets unSubmapState >>= \case
+    Just f -> do
+      case e of
+        KeyEvent {ev_keycode, ev_state, ev_event_type }
+          | ev_event_type == keyPress -> do
+          keysym <- liftIO $ keycodeToKeysym display ev_keycode 0
+          unless (isModifierKey keysym) $  do
+            mask <- cleanMask $ ev_state .&. ((1 `shiftL` 12) - 1)
+            exitSubmap
+            f (mask, keysym)
+          pure $ All False
+        _ -> pure $ All True
+    Nothing -> do
+      case e of
+        KeyEvent {ev_keycode, ev_state, ev_event_type } -> do
+          keysym <- liftIO $ keycodeToKeysym display ev_keycode 0
+          mask <- cleanMask $ ev_state .&. ((1 `shiftL` 12) - 1)
+          logLine $ "submapEventHook inner2" <> keyToString (mask, keysym) <> "," <> show e
+          when (xK_Super_L == keysym) $ case () of
+            _ | ev_event_type == keyPress -> do
+                  logLine "press"
+                  let (_, _, d) = runBind $ rootKeyMap (c {layoutHook = Layout $ layoutHook c}) False
+                  showHelp "Root" d
+                  logLine "shown"
+              | ev_event_type == keyRelease -> do
+                  logLine "release"
+                  hideHelp
+        _ -> pure ()
+      pure $ All True
+
+-- | Or allow another lookup table?
+modToString :: KeyMask -> String
+modToString mask = concatMap (++"-") $ filter (not . null)
+                $ map (uncurry pick)
+                [(mod1Mask, "M1")
+                ,(mod2Mask, "M2")
+                ,(mod3Mask, "M3")
+                ,(mod4Mask, "s")
+                ,(mod5Mask, "M5")
+                ,(controlMask, "C")
+                ,(shiftMask,"S")]
+    where pick m str = if m .&. complement mask == 0 then str else ""
+
+keyToString :: (KeyMask, KeySym) -> [Char]
+keyToString = uncurry (++) . (modToString *** keysymToString)
+

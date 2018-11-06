@@ -1,0 +1,3 @@
+local-packages:
+  X11-rm:
+    location: .

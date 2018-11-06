@@ -1,0 +1,18 @@
+Configuring X11-rm-0.2...
+Warning: 'ghc-options: -prof' is not necessary and will lead to problems when
+used on a library. Use the configure flag --enable-library-profiling and/or
+--enable-profiling.
+Preprocessing library for X11-rm-0.2..
+Building library for X11-rm-0.2..
+[1 of 1] Compiling Graphics.X11.XRM ( .stack-work/dist/x86_64-linux-nix/Cabal-2.2.0.1/build/Graphics/X11/XRM.hs, .stack-work/dist/x86_64-linux-nix/Cabal-2.2.0.1/build/Graphics/X11/XRM.o )
+
+[;1mGraphics/X11/XRM.hsc:52:10: [;1m[35mwarning:[0m[0m[;1m [[;1m[35m-Wmissing-methods[0m[0m[;1m][0m[0m[;1m
+    • No explicit implementation for
+        either ‘poke’ or ‘pokeElemOff’ or ‘pokeByteOff’
+    • In the instance declaration for ‘Storable RMValue’[0m[0m
+[;1m[34m   |[0m[0m
+[;1m[34m52 |[0m[0m instance [;1m[35mStorable RMValue[0m[0m where
+[;1m[34m   |[0m[0m[;1m[35m          ^^^^^^^^^^^^^^^^[0m[0m
+[0m[0m[0mignoring (possibly broken) abi-depends field for packages
+Installing library in /home/doug/code/doug-xmonad/.stack-work/install/x86_64-linux-nix/ghc-8.4.3/8.4.3/lib/x86_64-linux-ghc-8.4.3/X11-rm-0.2-AtBZpFixmgmC5xUMMDeoBg
+Registering library for X11-rm-0.2..

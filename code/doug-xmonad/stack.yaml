@@ -1,0 +1,14 @@
+# resolver:
+resolver: ghc-8.4.3
+system-ghc: true
+compiler-check: match-minor
+packages:
+- X11-rm-0.2
+- .
+
+extra-deps: []
+
+flags: {}
+
+extra-package-dbs: []
+

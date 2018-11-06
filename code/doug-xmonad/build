@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+# As of 0.13, xmonad --recompile will look for a custom build script.
+
+echo "building xmonad: $@"
+echo "pwd: $(pwd)"
+myxmonad="dist/build/doug-xmonad/doug-xmonad"
+xmonadhs="xmonad.hs"
+
+([[ ! -f ${myxmonad} ]] && echo "noexe" ) || ([[ ${xmonadhs} -nt "${myxmonad}" ]] && echo "newer")
+
+if [[ ( ! -f ${myxmonad} ) || ( "${xmonadhs}" -nt "${myxmonad}" ) || ( -n ${FORCE:-""} ) ]]; then
+  notify-send "Building xmonad"
+  cabal build
+  echo built
+fi
+
+if [[ ! -z "$1" ]]; then
+    notify-send "Copying xmonad"
+    echo "$1"
+    [[ -f "$1" ]] && (rm -f "$1" || echo error)
+    cp "${myxmonad}" "$1"
+fi

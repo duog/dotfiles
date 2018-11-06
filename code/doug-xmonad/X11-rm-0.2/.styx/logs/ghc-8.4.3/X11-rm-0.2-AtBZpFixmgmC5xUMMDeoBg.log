@@ -1,0 +1,19 @@
+cabal: Entering directory '.'
+Configuring X11-rm-0.2...
+Warning: 'ghc-options: -prof' is not necessary and will lead to problems when
+used on a library. Use the configure flag --enable-library-profiling and/or
+--enable-profiling.
+Preprocessing library for X11-rm-0.2..
+Building library for X11-rm-0.2..
+[1 of 1] Compiling Graphics.X11.XRM ( dist/dist-sandbox-77c9cb0b/build/Graphics/X11/XRM.hs, dist/dist-sandbox-77c9cb0b/build/Graphics/X11/XRM.o )
+
+Graphics/X11/XRM.hsc:52:10: warning: [-Wmissing-methods]
+    * No explicit implementation for
+        either `poke' or `pokeElemOff' or `pokeByteOff'
+    * In the instance declaration for `Storable RMValue'
+   |
+52 | instance Storable RMValue where
+   |          ^^^^^^^^^^^^^^^^
+ignoring (possibly broken) abi-depends field for packages
+Installing library in /home/doug/code/X11-rm-0.2/.styx/lib/x86_64-linux-ghc-8.4.3/X11-rm-0.2-AtBZpFixmgmC5xUMMDeoBg
+cabal: Leaving directory '.'
